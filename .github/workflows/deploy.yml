@@ -1,0 +1,70 @@
+name: Build and Deploy BOM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: Check if version is already published
+        id: check_published
+        run: |
+          ARTIFACT=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          GROUP=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout | tr '.' '/')
+          URL="https://maven.pkg.github.com/Event-Based-Banking-Application/arya-banking-maven-registry/$GROUP/$ARTIFACT/$VERSION/$ARTIFACT-$VERSION.pom"
+          if curl -fsI "$URL" >/dev/null 2>&1; then
+            echo "Version $VERSION already published, skipping deploy"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Deploy BOM
+        if: steps.check_published.outputs.skip != 'true'
+        run: mvn clean deploy -s settings.xml
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+
+      - name: Extract version from pom.xml
+        id: get_version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        if: github.event_name == 'push' && success()
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --tags origin "v$VERSION" | grep -q .; then
+            echo "Tag v$VERSION already exists on origin, skipping"
+          else
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+          fi
