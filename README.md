@@ -1,32 +1,8 @@
 # Arya Banking BOM
 
-Bill of Materials for the Arya Banking microservices ecosystem. Centralizes dependency versions so consuming services declare no versions.
+Bill of Materials — centralizes dependency versions for all Arya Banking services.
 
-## What It Manages
-
-### Common Modules
-
-| Artifact | Description |
-|---|---|
-| `org.arya.banking:core` | Domain models, exceptions, DTOs |
-| `org.arya.banking:mongo` | MongoDB configuration |
-| `org.arya.banking:kafka` | Kafka/Avro support |
-| `org.arya.banking:feign` | Feign client config |
-| `org.arya.banking:oauth2` | OAuth2 client credentials |
-| `org.arya.banking:arya-banking-outbox-service` | Outbox pattern library |
-
-### Third-Party Dependencies
-
-- Lombok
-- MapStruct + MapStruct Processor
-- Gson
-- Apache Avro
-- Confluent Kafka Avro Serializer + Schema Registry Client
-- Commons IO
-- `spring-boot-dependencies` (BOM import)
-- `spring-cloud-dependencies` (BOM import)
-
-## Quick Start
+## Usage
 
 ```xml
 <dependencyManagement>
@@ -40,33 +16,19 @@ Bill of Materials for the Arya Banking microservices ecosystem. Centralizes depe
         </dependency>
     </dependencies>
 </dependencyManagement>
-
-<dependencies>
-    <!-- No versions needed for managed artifacts -->
-    <dependency>
-        <groupId>org.arya.banking</groupId>
-        <artifactId>core</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-    </dependency>
-</dependencies>
 ```
+
+## What It Manages
+
+Common modules (`core`, `mongo`, `kafka`, `feign`, `oauth2`, `outbox-service`), plus `lombok`, `mapstruct`, `gson`, `avro`, `confluent`, `spring-boot-dependencies`, and `spring-cloud-dependencies`.
 
 ## Build
 
 ```sh
-mvn clean install          # install locally
-mvn clean deploy -s settings.xml  # publish to GitHub Packages
+mvn clean install
 ```
 
 ## Links
 
-- [Documentation](https://event-based-banking-application.github.io/arya-banking/docs/maven-registry/)
-- [GitHub Packages](https://github.com/Event-Based-Banking-Application/arya-banking-bom/packages)
+- [Docs](https://event-based-banking-application.github.io/arya-banking/docs/maven-registry/)
 - [Common Library](https://github.com/Event-Based-Banking-Application/arya-banking-common)
-
-## Maintainers
-
-- [Karthik Kulkarni](https://github.com/karthikkulkarni)
